@@ -40,20 +40,53 @@ object Elevator {
     }
   }
 
+  var currentFloor = 0
+  var currentDirection: Direction = GoUp
+  var slowPath = Seq[Node]()
+  var currentStatus: Status = Closed
 
-  def shortestPath(currentFloor: Int, currentDirection: Direction, roadmap: Seq[Node] = Seq()): Seq[Node] = {
-    val start: Node = Node(currentFloor, Some(currentDirection))
 
-    val generatedPath = roadmap.map(node => {
-      shortestPath(node.floor, start.shouldFollowThisDirection(node), roadmap.diff(Seq(node)))
-    })
+  def nextCommand(): Action = {
+    val bestPath = shortestPath(currentFloor, currentDirection, slowPath)
+    val actions = toActions(currentFloor, currentStatus, pathToRoadMap(bestPath))
+    actions match {
+      case Nil => ()
+      case Open :: tail  => {
+        slowPath = slowPath.dropWhile(_.isSameFloor(Node(currentFloor)))
+        currentStatus = Opened
+      }
+      case Nothing :: tail => {
+        slowPath = slowPath.dropWhile(_.isSameFloor(Node(currentFloor)))
+        currentStatus = Opened
+      }
+      case Close :: tail  => {
+        currentStatus = Closed
+      }
+      case Up :: tail  => {
+        currentFloor += 1
+      }
+      case Down :: tail  => {
+        currentFloor += 1
+      }
+    }
+    actions.headOption.getOrElse(Nothing)
 
-    generatedPath.maxBy(scoreThisPath(_))
+  }
+
+  def shortestPath(currentFloor: Int, currentDirection: Direction, roadmap: Seq[Node] = Seq()): Seq[Node] = roadmap match {
+    case Nil => Seq()
+    case _ => {
+      val generatedPath = roadmap.map(node => {
+          node +: shortestPath(node.floor, currentDirection, roadmap.tail)
+      })
+      generatedPath.maxBy(scoreThisPath(_))
+    }
   }
 
   def pathToRoadMap(path: Seq[Node]): Seq[Int] = path match {
-    case head::Nil => Seq(head.floor)
-    case head::tail => head.floor +: pathToRoadMap(tail.dropWhile(_.isSameFloor(head)))
+    case Nil => Seq()
+    case head :: Nil => Seq(head.floor)
+    case head :: tail => head.floor +: pathToRoadMap(tail.dropWhile(_.isSameFloor(head)))
   }
 
   def scoreThisPath(path: Seq[Node]): Double = {
@@ -65,6 +98,22 @@ object Elevator {
       }
     }
     _scoreThisPath(path, 1)
+  }
+
+
+  def call(floor: Int, direction: Direction) = {
+    slowPath = slowPath :+ Node(floor, Some(direction))
+  }
+
+  def go(floor: Int) = {
+    slowPath = slowPath :+ Node(floor)
+  }
+
+  def reset(cause: String) = {
+    currentFloor = 0
+    currentDirection = GoUp
+    slowPath = Seq[Node]()
+    currentStatus = Closed
   }
 
 

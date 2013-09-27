@@ -29,6 +29,14 @@ class ElevatorSpec extends Specification {
         actions must be equalTo Seq(Nothing)
     }
 
+    "gérer un scénario simple" in {
+      Elevator.reset("")
+      Elevator.call(1, GoUp)
+      Elevator.nextCommand() must be equalTo Up
+      Elevator.nextCommand() must be equalTo Open
+
+    }
+
   }
 
    /*
