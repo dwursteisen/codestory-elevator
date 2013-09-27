@@ -1,5 +1,6 @@
 import org.specs2.mutable.Specification
 import services.Elevator
+import services.Elevator.Node
 import services.model._
 
 /**
@@ -29,5 +30,31 @@ class ElevatorSpec extends Specification {
     }
 
   }
+
+   /*
+  "la cabine " should {
+    "aller a l'etage le plus proche " in {
+      val roadmap = Elevator.shortestPath(0, Seq(Node(1), Node(2)))
+      roadmap must be equalTo Seq(1, 2)
+    }
+  }
+  */
+
+  "le chemin " should {
+    "avoir un score" in {
+      Elevator.scoreThisPath(Seq(Node(0))) must be equalTo 100
+      Elevator.scoreThisPath(Seq(Node(0), Node(0))) must be equalTo 200
+      Elevator.scoreThisPath(Seq(Node(0), Node(1))) must be equalTo 150
+      Elevator.scoreThisPath(Seq(Node(0), Node(2))) must be equalTo 150
+    }
+  }
+
+  "le chemin " should {
+    "être transformé en roadmap" in {
+      val roadMap: Seq[Int] = Elevator.pathToRoadMap(Seq(Node(0), Node(1), Node(1), Node(2)))
+      roadMap must be equalTo Seq(0, 1, 2)
+    }
+  }
+
 
 }
