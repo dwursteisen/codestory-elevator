@@ -19,7 +19,7 @@ object Elevator {
       }
     }
 
-    def isSameFloor(other: Node): Boolean = other.floor equals floor
+    def isSameFloor(other: Node): Boolean = other != null && (other.floor equals floor)
   }
 
   def toActions(currentFloor: Int, currentStatus: Status, roadmap: Seq[Int]): Seq[Action] = {
@@ -52,21 +52,21 @@ object Elevator {
     actions match {
       case Nil => ()
       case Open :: tail  => {
-        slowPath = slowPath.dropWhile(_.isSameFloor(Node(currentFloor)))
+        slowPath = slowPath.diff(Seq(bestPath.head))
         currentStatus = Opened
       }
       case Nothing :: tail => {
-        slowPath = slowPath.dropWhile(_.isSameFloor(Node(currentFloor)))
+        slowPath = slowPath.diff(Seq(bestPath.head))
         currentStatus = Opened
       }
       case Close :: tail  => {
         currentStatus = Closed
       }
       case Up :: tail  => {
-        currentFloor += 1
+        currentFloor = Math.min(currentFloor + 1, 6)
       }
       case Down :: tail  => {
-        currentFloor += 1
+        currentFloor = Math.max(currentFloor -1, 0)
       }
     }
     actions.headOption.getOrElse(Nothing)
@@ -77,9 +77,9 @@ object Elevator {
     case Nil => Seq()
     case _ => {
       val generatedPath = roadmap.map(node => {
-          node +: shortestPath(node.floor, currentDirection, roadmap.tail)
+          node +: shortestPath(node.floor, currentDirection, roadmap.diff(Seq(node)))
       })
-      generatedPath.maxBy(scoreThisPath(_))
+      generatedPath.maxBy(p => scoreThisPath(currentFloor, p))
     }
   }
 
@@ -89,15 +89,14 @@ object Elevator {
     case head :: tail => head.floor +: pathToRoadMap(tail.dropWhile(_.isSameFloor(head)))
   }
 
-  def scoreThisPath(path: Seq[Node]): Double = {
-    def _scoreThisPath(path: Seq[Node], malus: Double): Double = path match {
-      case Nil => 0
-      case head :: tail => {
-        val nodeScore: Double = 100 * malus * path.count(_.isSameFloor(head))
-        nodeScore + _scoreThisPath(tail.dropWhile(_.isSameFloor(head)), malus / path.size)
-      }
-    }
-    _scoreThisPath(path, 1)
+  def scoreThisPath(currentFloor: Int, path: Seq[Node]): Double = path match {
+    case Nil => 0.0
+    case Node(floor, Some(GoUp)) :: tail if floor == currentFloor => 10  + scoreThisPath(currentFloor+1, tail)
+    case Node(floor, Some(GoDown)) :: tail if floor == currentFloor => 10  + scoreThisPath(currentFloor-1, tail)
+    case Node(floor, None) :: tail if floor == currentFloor => 10  + scoreThisPath(currentFloor, tail)
+    case head :: tail if head.floor > currentFloor => -5 + scoreThisPath(currentFloor +1, path)
+    case head :: tail if head.floor < currentFloor => -5 + scoreThisPath(currentFloor -1, path)
+
   }
 
 

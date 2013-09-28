@@ -50,10 +50,10 @@ class ElevatorSpec extends Specification {
 
   "le chemin " should {
     "avoir un score" in {
-      Elevator.scoreThisPath(Seq(Node(0))) must be equalTo 100
-      Elevator.scoreThisPath(Seq(Node(0), Node(0))) must be equalTo 200
-      Elevator.scoreThisPath(Seq(Node(0), Node(1))) must be equalTo 150
-      Elevator.scoreThisPath(Seq(Node(0), Node(2))) must be equalTo 150
+      Elevator.scoreThisPath(0, Seq(Node(0))) must be equalTo 10
+      Elevator.scoreThisPath(0, Seq(Node(0), Node(0))) must be equalTo 20
+      Elevator.scoreThisPath(0, Seq(Node(0), Node(1), Node(0))) must be equalTo 20
+      Elevator.scoreThisPath(0, Seq(Node(0), Node(0), Node(1))) must be equalTo 25
     }
   }
 
