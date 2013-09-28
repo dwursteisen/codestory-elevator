@@ -19,7 +19,8 @@ object Elevator {
       }
     }
 
-    def isSameFloor(other: Node): Boolean = other != null && (other.floor equals floor)
+    def isSameFloor(other: Node): Boolean = other != null && isSameFloor(other.floor)
+    def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
   }
 
   def toActions(currentFloor: Int, currentStatus: Status, roadmap: Seq[Int]): Seq[Action] = {
@@ -52,11 +53,11 @@ object Elevator {
     actions match {
       case Nil => ()
       case Open :: tail  => {
-        slowPath = slowPath.diff(Seq(bestPath.head))
+        slowPath = slowPath.filterNot(_.isSameFloor(currentFloor))
         currentStatus = Opened
       }
       case Nothing :: tail => {
-        slowPath = slowPath.diff(Seq(bestPath.head))
+        slowPath = slowPath.filterNot(_.isSameFloor(currentFloor))
         currentStatus = Opened
       }
       case Close :: tail  => {
@@ -86,7 +87,7 @@ object Elevator {
   def pathToRoadMap(path: Seq[Node]): Seq[Int] = path match {
     case Nil => Seq()
     case head :: Nil => Seq(head.floor)
-    case head :: tail => head.floor +: pathToRoadMap(tail.dropWhile(_.isSameFloor(head)))
+    case head :: tail => head.floor +: pathToRoadMap(tail.filterNot(_.isSameFloor(head)))
   }
 
   def scoreThisPath(currentFloor: Int, path: Seq[Node]): Double = path match {
