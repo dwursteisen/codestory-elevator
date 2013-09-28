@@ -45,6 +45,7 @@ object Elevator {
   var currentDirection: Direction = GoUp
   var slowPath = Seq[Node]()
   var currentStatus: Status = Closed
+  var shouldClose = false
 
 
   def nextCommand(): Action = {
@@ -70,7 +71,20 @@ object Elevator {
         currentFloor = Math.max(currentFloor -1, 0)
       }
     }
-    actions.headOption.getOrElse(Nothing)
+    // shoudl
+    val actionToReturn = actions.headOption.getOrElse(Nothing)
+    actionToReturn match {
+      case Nothing if shouldClose => {
+        shouldClose = false
+        currentStatus = Closed
+        Close
+      }
+      case Nothing if !shouldClose => {
+        shouldClose = true;
+        Nothing
+      }
+      case action => action
+    }
 
   }
 
@@ -92,9 +106,9 @@ object Elevator {
 
   def scoreThisPath(currentFloor: Int, path: Seq[Node]): Double = path match {
     case Nil => 0.0
-    case Node(floor, Some(GoUp)) :: tail if floor == currentFloor => 10  + scoreThisPath(currentFloor+1, tail)
-    case Node(floor, Some(GoDown)) :: tail if floor == currentFloor => 10  + scoreThisPath(currentFloor-1, tail)
-    case Node(floor, None) :: tail if floor == currentFloor => 10  + scoreThisPath(currentFloor, tail)
+    case Node(floor, Some(GoUp)) :: tail if floor == currentFloor => 5 + scoreThisPath(currentFloor+1, tail)
+    case Node(floor, Some(GoDown)) :: tail if floor == currentFloor => 5  + scoreThisPath(currentFloor-1, tail)
+    case Node(floor, None) :: tail if floor == currentFloor => 10 + scoreThisPath(currentFloor, tail)
     case head :: tail if head.floor > currentFloor => -5 + scoreThisPath(currentFloor +1, path)
     case head :: tail if head.floor < currentFloor => -5 + scoreThisPath(currentFloor -1, path)
 
@@ -103,10 +117,12 @@ object Elevator {
 
   def call(floor: Int, direction: Direction) = {
     slowPath = slowPath :+ Node(floor, Some(direction))
+    shouldClose = false
   }
 
   def go(floor: Int) = {
     slowPath = slowPath :+ Node(floor)
+    shouldClose = false
   }
 
   def reset(cause: String) = {
@@ -114,6 +130,7 @@ object Elevator {
     currentDirection = GoUp
     slowPath = Seq[Node]()
     currentStatus = Closed
+    shouldClose = false
   }
 
 
