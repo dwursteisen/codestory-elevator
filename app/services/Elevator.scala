@@ -7,18 +7,7 @@ import services.model._
  */
 object Elevator {
 
-  case class Node(floor: Int, direction: Option[Direction] = None) {
-    def shouldFollowThisDirection(target: Node): Direction = {
-      if (floor < target.floor) {
-        GoUp
-      } else if (floor > target.floor) {
-        GoDown
-      } else direction match {
-        case Some(direction) => direction
-        case None => GoUp // default
-      }
-    }
-
+  case class Node(floor: Int, direction: Option[Direction] = None, callTick: Int = 0) {
     def isSameFloor(other: Node): Boolean = other != null && isSameFloor(other.floor)
     def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
   }
@@ -49,7 +38,8 @@ object Elevator {
   }
 
   var status = ElevatorStatus()
-
+  val MIN_FLOOR = 0
+  val MAX_FLOOR = 6
 
   def nextCommand(): Action = {
     val bestPath = shortestPath(status)
@@ -68,12 +58,15 @@ object Elevator {
         status = status.copy(currentStatus = Closed)
       }
       case Up :: tail  => {
-        status = status.copy(currentFloor = Math.min(currentFloor + 1, 6))
+        status = status.copy(currentFloor = Math.min(currentFloor + 1, MAX_FLOOR))
       }
       case Down :: tail  => {
-        status = status.copy(currentFloor = Math.max(currentFloor - 1, 0))
+        status = status.copy(currentFloor = Math.max(currentFloor - 1, MIN_FLOOR))
       }
     }
+
+    status = status.copy(tick = status.tick + 1)
+
     // shoudl
     val actionToReturn = actions.headOption.getOrElse(Nothing)
     actionToReturn match {
@@ -108,12 +101,19 @@ object Elevator {
 
   def scoreThisPath(currentFloor: Int, path: Seq[Node]): Double = path match {
     case Nil => 0.0
-    case Node(floor, Some(GoUp)) :: tail if floor == currentFloor => 5 + scoreThisPath(currentFloor+1, tail)
-    case Node(floor, Some(GoDown)) :: tail if floor == currentFloor => 5  + scoreThisPath(currentFloor-1, tail)
-    case Node(floor, None) :: tail if floor == currentFloor => 10 + scoreThisPath(currentFloor, tail)
+    case Node(floor, Some(GoUp), _) :: tail if floor == currentFloor => 5 + scoreThisPath(currentFloor+1, tail)
+    case Node(floor, Some(GoDown), _) :: tail if floor == currentFloor => 5  + scoreThisPath(currentFloor-1, tail)
+    case Node(floor, None, _) :: tail if floor == currentFloor => 10 + scoreThisPath(currentFloor, tail)
     case head :: tail if head.floor > currentFloor => -5 + scoreThisPath(currentFloor +1, path)
     case head :: tail if head.floor < currentFloor => -5 + scoreThisPath(currentFloor -1, path)
+  }
 
+
+  def extrapolatePath(path: Seq[Node]): Seq[Node] = path match {
+    case Nil => Nil
+    case Node(floor, Some(GoUp), tick)::tail => Node(Math.min(floor + 1, MAX_FLOOR), callTick = tick) +: extrapolatePath(tail)
+    case Node(floor, Some(GoDown), tick)::tail => Node(Math.min(floor - 1, MIN_FLOOR), callTick = tick) +: extrapolatePath(tail)
+    case (node:Node)::tail => node +: extrapolatePath(tail)
   }
 
 

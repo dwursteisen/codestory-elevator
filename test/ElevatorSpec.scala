@@ -1,6 +1,6 @@
 import org.specs2.mutable.Specification
 import services.Elevator
-import services.Elevator.Node
+import services.Elevator.{ElevatorStatus, Node}
 import services.model._
 
 /**
@@ -10,13 +10,13 @@ class ElevatorSpec extends Specification {
 
   "L'ascenceur" should {
     "passer par tous les étages" in {
-        val actions = Elevator.toActions(0, Closed, Seq(1, 2))
-        actions must be equalTo Seq(Up, Open, Close, Up, Open)
+      val actions = Elevator.toActions(0, Closed, Seq(1, 2))
+      actions must be equalTo Seq(Up, Open, Close, Up, Open)
     }
 
     "passer a l'étage suivant" in {
-        val actions = Elevator.toActions(0, Closed, Seq(1))
-        actions must be equalTo Seq(Up, Open)
+      val actions = Elevator.toActions(0, Closed, Seq(1))
+      actions must be equalTo Seq(Up, Open)
     }
 
     "s'ouvrir" in {
@@ -25,8 +25,8 @@ class ElevatorSpec extends Specification {
     }
 
     "rester ouvert" in {
-        val actions = Elevator.toActions(0, Opened, Seq(0))
-        actions must be equalTo Seq(Nothing)
+      val actions = Elevator.toActions(0, Opened, Seq(0))
+      actions must be equalTo Seq(Nothing)
     }
 
     "gérer un scénario simple" in {
@@ -39,14 +39,14 @@ class ElevatorSpec extends Specification {
 
   }
 
-   /*
-  "la cabine " should {
-    "aller a l'etage le plus proche " in {
-      val roadmap = Elevator.shortestPath(0, Seq(Node(1), Node(2)))
-      roadmap must be equalTo Seq(1, 2)
-    }
-  }
-  */
+  /*
+ "la cabine " should {
+   "aller a l'etage le plus proche " in {
+     val roadmap = Elevator.shortestPath(0, Seq(Node(1), Node(2)))
+     roadmap must be equalTo Seq(1, 2)
+   }
+ }
+ */
 
   "le chemin " should {
     "avoir un score" in {
@@ -64,5 +64,12 @@ class ElevatorSpec extends Specification {
     }
   }
 
+  "le chemin" should {
+    "être extrapolé" in {
+      val path: Seq[Node] = Elevator.extrapolatePath(Seq(Node(0, Some(GoUp))))
+      path must be equalTo Seq(Node(1))
+    }
+
+  }
 
 }
