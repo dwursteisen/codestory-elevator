@@ -23,6 +23,13 @@ object Elevator {
     def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
   }
 
+  case class ElevatorStatus(tick: Int = 0,
+                    currentFloor: Int = 0,
+                    currentDirection: Direction = GoUp,
+                    currentStatus: Status = Closed,
+                    path: Seq[Node] = Seq(),
+                    shouldClose:Boolean = false)
+
   def toActions(currentFloor: Int, currentStatus: Status, roadmap: Seq[Int]): Seq[Action] = {
     roadmap match {
       case Nil => Nil
@@ -41,46 +48,41 @@ object Elevator {
     }
   }
 
-  var currentFloor = 0
-  var currentDirection: Direction = GoUp
-  var slowPath = Seq[Node]()
-  var currentStatus: Status = Closed
-  var shouldClose = false
+  var status = ElevatorStatus()
 
 
   def nextCommand(): Action = {
-    val bestPath = shortestPath(currentFloor, currentDirection, slowPath)
+    val bestPath = shortestPath(status)
+    val currentFloor = status.currentFloor
+    val currentStatus = status.currentStatus
     val actions = toActions(currentFloor, currentStatus, pathToRoadMap(bestPath))
     actions match {
       case Nil => ()
       case Open :: tail  => {
-        slowPath = slowPath.filterNot(_.isSameFloor(currentFloor))
-        currentStatus = Opened
+        status = status.copy(currentStatus = Opened, path = status.path.filterNot(_.isSameFloor(currentFloor)))
       }
       case Nothing :: tail => {
-        slowPath = slowPath.filterNot(_.isSameFloor(currentFloor))
-        currentStatus = Opened
+        status = status.copy(currentStatus = Opened, path = status.path.filterNot(_.isSameFloor(currentFloor)))
       }
       case Close :: tail  => {
-        currentStatus = Closed
+        status = status.copy(currentStatus = Closed)
       }
       case Up :: tail  => {
-        currentFloor = Math.min(currentFloor + 1, 6)
+        status = status.copy(currentFloor = Math.min(currentFloor + 1, 6))
       }
       case Down :: tail  => {
-        currentFloor = Math.max(currentFloor -1, 0)
+        status = status.copy(currentFloor = Math.max(currentFloor - 1, 0))
       }
     }
     // shoudl
     val actionToReturn = actions.headOption.getOrElse(Nothing)
     actionToReturn match {
-      case Nothing if shouldClose => {
-        shouldClose = false
-        currentStatus = Closed
+      case Nothing if status.shouldClose => {
+        status = status.copy(shouldClose = false, currentStatus = Closed)
         Close
       }
-      case Nothing if !shouldClose => {
-        shouldClose = true;
+      case Nothing if !status.shouldClose => {
+        status = status.copy(shouldClose = true)
         Nothing
       }
       case action => action
@@ -88,13 +90,13 @@ object Elevator {
 
   }
 
-  def shortestPath(currentFloor: Int, currentDirection: Direction, roadmap: Seq[Node] = Seq()): Seq[Node] = roadmap match {
+  def shortestPath(status: ElevatorStatus): Seq[Node] = status.path match {
     case Nil => Seq()
     case _ => {
-      val generatedPath = roadmap.map(node => {
-          node +: shortestPath(node.floor, currentDirection, roadmap.diff(Seq(node)))
+      val generatedPath = status.path.map(node => {
+          node +: shortestPath(status.copy(currentFloor = node.floor, path=status.path.diff(Seq(node))))
       })
-      generatedPath.maxBy(p => scoreThisPath(currentFloor, p))
+      generatedPath.maxBy(p => scoreThisPath(status.currentFloor, p))
     }
   }
 
@@ -116,21 +118,15 @@ object Elevator {
 
 
   def call(floor: Int, direction: Direction) = {
-    slowPath = slowPath :+ Node(floor, Some(direction))
-    shouldClose = false
+    status = status.copy(path = status.path :+ Node(floor, Some(direction)), shouldClose = false)
   }
 
   def go(floor: Int) = {
-    slowPath = slowPath :+ Node(floor)
-    shouldClose = false
+    status = status.copy(path = status.path :+ Node(floor), shouldClose = false)
   }
 
   def reset(cause: String) = {
-    currentFloor = 0
-    currentDirection = GoUp
-    slowPath = Seq[Node]()
-    currentStatus = Closed
-    shouldClose = false
+    status = ElevatorStatus()
   }
 
 
