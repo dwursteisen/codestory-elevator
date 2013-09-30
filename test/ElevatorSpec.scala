@@ -1,6 +1,8 @@
 import org.specs2.mutable.Specification
 import services.Elevator
-import services.Elevator.{ElevatorStatus, Node}
+import services.Elevator._
+import services.Elevator.Call
+import services.Elevator.Node
 import services.model._
 
 /**
@@ -55,19 +57,36 @@ class ElevatorSpec extends Specification {
       Elevator.scoreThisPath(0, Seq(Node(0), Node(1), Node(0))) must be equalTo 20
       Elevator.scoreThisPath(0, Seq(Node(0), Node(0), Node(1))) must be equalTo 25
     }
-  }
 
-  "le chemin " should {
     "être transformé en roadmap" in {
       val roadMap: Seq[Int] = Elevator.pathToRoadMap(Seq(Node(0), Node(1), Node(1), Node(2)))
       roadMap must be equalTo Seq(0, 1, 2)
     }
-  }
 
-  "le chemin" should {
     "être extrapolé" in {
-      val path: Seq[Node] = Elevator.extrapolatePath(Seq(Node(0, Some(GoUp))))
-      path must be equalTo Seq(Node(1))
+      val path: Seq[Operation] = Elevator.extrapolatePath(Seq(Call(0, GoUp)))
+      path must be equalTo Seq(Call(0, GoUp, go=Go(Call(0, GoUp), 1)), Go(Call(0, GoUp), 1))
+    }
+
+    "avoir des ticks" in {
+      val go: Go = Go(Call(0, GoUp), 1)
+      val path = Elevator.tickIt(0, 0, Seq(Call(0, GoUp, go = go), go))
+      path.find(n => n match {
+        case node:Go => true
+        case _ => false
+      }).get must be equalTo Go(Call(0, GoUp), 1, 2)
+    }
+
+    "avoir un changement d'operation" in {
+      val path = Elevator.replace(Seq(Go(Call(0, GoUp), 1)), Go(Call(0, GoUp), 1), Go(Call(0,GoUp), 1, 1))
+      path must be equalTo Seq(Go(Call(0,GoUp), 1, 1))
+    }
+
+    "avoir un score" in {
+      val goFrom0To2 = Go(Call(0, GoUp, 0), 2, 10)
+      val call0To2 = Call(0, GoUp, 0, goFrom0To2)
+
+      Elevator.scoreIt(0, 0, Seq(call0To2, goFrom0To2)) must be equalTo 14
     }
 
   }

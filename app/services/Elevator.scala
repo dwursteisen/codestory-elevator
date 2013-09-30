@@ -12,11 +12,38 @@ object Elevator {
     def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
   }
 
+  sealed trait Operation {
+    def isSameFloor(floor: Int):Boolean
+  }
+
+  case class Call(floor: Int, direction: Direction, callTick: Int = 0, go:Go = null) extends Operation {
+    def toGo(floor: Int, goTick: Int = 0) = {
+      Go(this, floor,goTick)
+    }
+    def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
+    def isSameOperation(operation:Call): Boolean = {
+      isSameFloor(operation.floor) && (direction equals operation.direction) && (callTick equals operation.callTick)
+    }
+    def isSameOperation(operation:Go): Boolean = {
+      false
+    }
+  }
+
+  case class Go(call: Call, floor: Int, goTick: Int = 0) extends Operation {
+    def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
+    def isSameOperation(operation:Call): Boolean = {
+      false
+    }
+    def isSameOperation(operation:Go): Boolean = {
+      isSameFloor(operation.floor) && call.isSameOperation(operation.call)
+    }
+  }
+
   case class ElevatorStatus(tick: Int = 0,
                     currentFloor: Int = 0,
                     currentDirection: Direction = GoUp,
                     currentStatus: Status = Closed,
-                    path: Seq[Node] = Seq(),
+                    path: Seq[Operation] = Seq(),
                     shouldClose:Boolean = false)
 
   def toActions(currentFloor: Int, currentStatus: Status, roadmap: Seq[Int]): Seq[Action] = {
@@ -42,7 +69,7 @@ object Elevator {
   val MAX_FLOOR = 6
 
   def nextCommand(): Action = {
-    val bestPath = shortestPath(status)
+    val bestPath = bestPath(status)
     val currentFloor = status.currentFloor
     val currentStatus = status.currentStatus
     val actions = toActions(currentFloor, currentStatus, pathToRoadMap(bestPath))
@@ -83,20 +110,26 @@ object Elevator {
 
   }
 
-  def shortestPath(status: ElevatorStatus): Seq[Node] = status.path match {
-    case Nil => Seq()
-    case _ => {
-      val generatedPath = status.path.map(node => {
-          node +: shortestPath(status.copy(currentFloor = node.floor, path=status.path.diff(Seq(node))))
-      })
-      generatedPath.maxBy(p => scoreThisPath(status.currentFloor, p))
-    }
-  }
+//  def shortestPath(status: ElevatorStatus): Seq[Node] = status.path match {
+//    case Nil => Seq()
+//    case _ => {
+//      val generatedPath = status.path.map(node => {
+//          node +: shortestPath(status.copy(currentFloor = node.floor, path=status.path.diff(Seq(node))))
+//      })
+//      generatedPath.maxBy(p => scoreThisPath(status.currentFloor, p))
+//    }
+//  }
 
-  def pathToRoadMap(path: Seq[Node]): Seq[Int] = path match {
+//  def pathToRoadMap(path: Seq[Node]): Seq[Int] = path match {
+//    case Nil => Seq()
+//    case head :: Nil => Seq(head.floor)
+//    case head :: tail => head.floor +: pathToRoadMap(tail.filterNot(_.isSameFloor(head)))
+//  }
+
+  def pathToRoadMap(path: Seq[Operation]): Seq[Int] = path match {
     case Nil => Seq()
-    case head :: Nil => Seq(head.floor)
-    case head :: tail => head.floor +: pathToRoadMap(tail.filterNot(_.isSameFloor(head)))
+    case (head:Call) :: tail => head.floor +: pathToRoadMap(tail.filterNot(_.isSameFloor(head.floor)))
+    case (head:Go) :: tail => head.floor +: pathToRoadMap(tail.filterNot(_.isSameFloor(head.floor)))
   }
 
   def scoreThisPath(currentFloor: Int, path: Seq[Node]): Double = path match {
@@ -109,20 +142,79 @@ object Elevator {
   }
 
 
-  def extrapolatePath(path: Seq[Node]): Seq[Node] = path match {
-    case Nil => Nil
-    case Node(floor, Some(GoUp), tick)::tail => Node(Math.min(floor + 1, MAX_FLOOR), callTick = tick) +: extrapolatePath(tail)
-    case Node(floor, Some(GoDown), tick)::tail => Node(Math.min(floor - 1, MIN_FLOOR), callTick = tick) +: extrapolatePath(tail)
-    case (node:Node)::tail => node +: extrapolatePath(tail)
+  def bestPath(status:ElevatorStatus):Seq[Operation] = {
+    val extrapolatedPath = extrapolatePath(status.path)
+
   }
 
 
+
+  def extrapolatePath(path: Seq[Operation]): Seq[Operation] = path match {
+    case Nil => Nil
+    case (node:Go)::tail => node +:extrapolatePath(tail)
+    case (node:Call)::tail if node.direction equals GoUp => {
+      val go = node.toGo(Math.min(node.floor + 1, MAX_FLOOR))
+      node.copy(go = go) +: go +: extrapolatePath(tail)
+    }
+    case (node:Call)::tail if node.direction equals GoDown => {
+      val go = node.toGo(Math.max(node.floor - 1, MIN_FLOOR))
+      node.copy(go = go) +: go +: extrapolatePath(tail)
+    }
+  }
+
+
+  def tickIt(floor: Int, tick: Int, path:Seq[Operation], previousFloor:Int = -1): Seq[Operation] = path match {
+    case Nil => Nil
+    case(node:Go)::tail if node.isSameFloor(floor) && (floor == previousFloor) => node +: tickIt(floor, tick, tail, floor)
+    case(node:Go)::tail if node.isSameFloor(floor) && (floor != previousFloor) => node +: tickIt(floor, tick + 2, tail, floor)
+    case(node:Go)::tail if node.floor > floor => tickIt(floor + 1, tick + 1, path, floor)
+    case(node:Go)::tail if node.floor < floor => tickIt(floor - 1, tick + 1, path, floor)
+    case(node:Call)::tail if(node.floor > floor) => tickIt(floor + 1, tick+1, path, floor)
+    case(node:Call)::tail if(node.floor < floor) => tickIt(floor - 1, tick+1, path, floor)
+    case(node:Call)::tail if node.isSameFloor(floor) && (floor == previousFloor) => {
+      node +: tickIt(floor, tick, replace(tail, node.go, node.go.copy(goTick=tick)), floor)
+    }
+    case(node:Call)::tail if node.isSameFloor(floor) && (floor != previousFloor) => {
+      node +: tickIt(floor, tick+2, replace(tail, node.go, node.go.copy(goTick=tick+2)), floor)
+    }
+  }
+
+  def scoreIt(floor:Int, tick: Int, path:Seq[Operation]):Double = path match {
+    case Nil => 0
+    case Call(callFloor, _, _, _) :: tail if (callFloor == floor) => scoreIt(floor, tick, tail)
+    case Call(callFloor, _, _, _) :: tail if (floor > callFloor) => scoreIt(floor - 1, tick + 1, path)
+    case Call(callFloor, _, _, _) :: tail if (floor < callFloor) => scoreIt(floor + 1, tick + 1, path)
+    case Go(_, goFloor, _) :: tail if (floor > goFloor) => scoreIt(floor - 1, tick + 1, path)
+    case Go(_, goFloor, _) :: tail if (floor < goFloor) => scoreIt(floor + 1, tick + 1, path)
+    case Go(callOp, goFloor, goTick) :: tail if (floor == goFloor) => {
+
+      val score = 20 - ((goTick-callOp.callTick) / 2) - (tick - goTick) + 2 + Math.abs(callOp.floor - goFloor)
+      Math.min(Math.max(0, score), 20) + scoreIt(floor, tick, tail)
+    }
+  }
+
+  def replace(path: Seq[Operation], to: Go, replaced: Go):Seq[Operation] = path match {
+    case Nil => Nil
+    case (op:Call)::tail => op +: replace(tail, to, replaced)
+    case (op:Go) :: tail if op.isSameOperation(to) => replaced +: replace(tail, to, replaced)
+    case (op:Go) :: tail if !op.isSameOperation(to) => op +: replace(tail, to, replaced)
+  }
+
   def call(floor: Int, direction: Direction) = {
-    status = status.copy(path = status.path :+ Node(floor, Some(direction)), shouldClose = false)
+    status = status.copy(path = status.path :+ Call(floor, direction, status.tick), shouldClose = false)
   }
 
   def go(floor: Int) = {
-    status = status.copy(path = status.path :+ Node(floor), shouldClose = false)
+    val callOp: Operation = status.path.find(op => op match {
+      case (op: Call) if op.isSameFloor(status.currentFloor) && op.go == null => true
+      case _ => false
+    }).get
+
+    val goOp: Go = callOp match {
+      case (op:Call) => op.toGo(floor,status.tick)
+    }
+
+    status = status.copy(path = status.path :+ goOp, shouldClose = false)
   }
 
   def reset(cause: String) = {
