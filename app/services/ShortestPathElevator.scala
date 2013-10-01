@@ -7,22 +7,6 @@ import services.model._
  */
 object ShortestPathElevator extends Elevator{
 
-  case class Node(floor: Int, direction: Option[Direction] = None) {
-    def shouldFollowThisDirection(target: Node): Direction = {
-      if (floor < target.floor) {
-        GoUp
-      } else if (floor > target.floor) {
-        GoDown
-      } else direction match {
-        case Some(direction) => direction
-        case None => GoUp // default
-      }
-    }
-
-    def isSameFloor(other: Node): Boolean = other != null && isSameFloor(other.floor)
-    def isSameFloor(floor: Int): Boolean = (floor equals this.floor)
-  }
-
   def toActions(currentFloor: Int, currentStatus: Status, roadmap: Seq[Int]): Seq[Action] = {
     roadmap match {
       case Nil => Nil
@@ -43,7 +27,7 @@ object ShortestPathElevator extends Elevator{
 
   var currentFloor = 0
   var currentDirection: Direction = GoUp
-  var slowPath = Seq[Node]()
+  var slowPath = Seq[Operation]()
   var currentStatus: Status = Closed
   var shouldClose = false
 
@@ -88,7 +72,7 @@ object ShortestPathElevator extends Elevator{
 
   }
 
-  def shortestPath(currentFloor: Int, currentDirection: Direction, roadmap: Seq[Node] = Seq()): Seq[Node] = roadmap match {
+  def shortestPath(currentFloor: Int, currentDirection: Direction, roadmap: Seq[Operation] = Seq()): Seq[Operation] = roadmap match {
     case Nil => Seq()
     case _ => {
       val generatedPath = roadmap.map(node => {
@@ -98,17 +82,17 @@ object ShortestPathElevator extends Elevator{
     }
   }
 
-  def pathToRoadMap(path: Seq[Node]): Seq[Int] = path match {
+  def pathToRoadMap(path: Seq[Operation]): Seq[Int] = path match {
     case Nil => Seq()
     case head :: Nil => Seq(head.floor)
     case head :: tail => head.floor +: pathToRoadMap(tail.filterNot(_.isSameFloor(head)))
   }
 
-  def scoreThisPath(currentFloor: Int, path: Seq[Node]): Double = path match {
+  def scoreThisPath(currentFloor: Int, path: Seq[Operation]): Double = path match {
     case Nil => 0.0
-    case Node(floor, Some(GoUp)) :: tail if floor == currentFloor => 5 + scoreThisPath(currentFloor+1, tail)
-    case Node(floor, Some(GoDown)) :: tail if floor == currentFloor => 5  + scoreThisPath(currentFloor-1, tail)
-    case Node(floor, None) :: tail if floor == currentFloor => 10 + scoreThisPath(currentFloor, tail)
+    case Call(floor, GoUp) :: tail if floor == currentFloor => 5 + scoreThisPath(currentFloor+1, tail)
+    case Call(floor, GoDown) :: tail if floor == currentFloor => 5  + scoreThisPath(currentFloor-1, tail)
+    case Go(floor) :: tail if floor == currentFloor => 10 + scoreThisPath(currentFloor, tail)
     case head :: tail if head.floor > currentFloor => -5 + scoreThisPath(currentFloor +1, path)
     case head :: tail if head.floor < currentFloor => -5 + scoreThisPath(currentFloor -1, path)
 
@@ -116,19 +100,19 @@ object ShortestPathElevator extends Elevator{
 
 
   def call(floor: Int, direction: Direction) = {
-    slowPath = slowPath :+ Node(floor, Some(direction))
+    slowPath = slowPath :+ Call(floor, direction)
     shouldClose = false
   }
 
   def go(floor: Int) = {
-    slowPath = slowPath :+ Node(floor)
+    slowPath = slowPath :+ Go(floor)
     shouldClose = false
   }
 
   def reset(cause: String) = {
     currentFloor = 0
     currentDirection = GoUp
-    slowPath = Seq[Node]()
+    slowPath = Seq[Operation]()
     currentStatus = Closed
     shouldClose = false
   }
