@@ -26,5 +26,12 @@ GET     /v2/reset                      controllers.ApplicationV2.reset(cause: St
 GET     /v2/userHasEntered             controllers.ApplicationV2.userEntering
 GET     /v2/userHasExited              controllers.ApplicationV2.userExiting
 
+GET     /v3/nextCommand                controllers.ApplicationV3.nextCommand
+GET     /v3/call                       controllers.ApplicationV3.call(atFloor: Int, to: String)
+GET     /v3/go                         controllers.ApplicationV3.go(floorToGo: Int)
+GET     /v3/reset                      controllers.ApplicationV3.reset(cause: String)
+GET     /v3/userHasEntered             controllers.ApplicationV3.userEntering
+GET     /v3/userHasExited              controllers.ApplicationV3.userExiting
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
