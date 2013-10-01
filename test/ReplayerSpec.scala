@@ -1,5 +1,5 @@
 import org.specs2.mutable.Specification
-import services.Elevator
+import services.ShortestPathElevator
 import services.model.{Up, Open, Close}
 
 /**
@@ -18,15 +18,15 @@ class ReplayerSpec extends Specification {
           "2013-09-28 01:10:49.478     HTTPElevator http://localhost:9000/nextCommand NOTHING\n" +
           "2013-09-28 01:10:50.461     HTTPElevator http://localhost:9000/call?atFloor=2&to=DOWN\n"
       Replayer.replay(scenario)
-      Elevator.nextCommand() must be equalTo Close
-      Elevator.nextCommand() must be equalTo Up
-      Elevator.nextCommand() must be equalTo Up
-      Elevator.nextCommand() must be equalTo Open
-      Elevator.nextCommand() must be equalTo Close
-      Elevator.nextCommand() must be equalTo Up
-      Elevator.nextCommand() must be equalTo Up
-      Elevator.nextCommand() must be equalTo Up
-      Elevator.nextCommand() must be equalTo Open
+      ShortestPathElevator.nextCommand() must be equalTo Close
+      ShortestPathElevator.nextCommand() must be equalTo Up
+      ShortestPathElevator.nextCommand() must be equalTo Up
+      ShortestPathElevator.nextCommand() must be equalTo Open
+      ShortestPathElevator.nextCommand() must be equalTo Close
+      ShortestPathElevator.nextCommand() must be equalTo Up
+      ShortestPathElevator.nextCommand() must be equalTo Up
+      ShortestPathElevator.nextCommand() must be equalTo Up
+      ShortestPathElevator.nextCommand() must be equalTo Open
     }
 
     "ne pas rester en NOTHING" in {
@@ -74,7 +74,7 @@ class ReplayerSpec extends Specification {
           "2013-09-28 18:04:38.224     HTTPElevator http://localhost:9000/call?atFloor=0&to=UP\n" +
           "2013-09-28 18:04:38.239     HTTPElevator http://localhost:9000/nextCommand NOTHING\n"
       Replayer.replay(scenario)
-      Elevator.nextCommand() must be equalTo Close
+      ShortestPathElevator.nextCommand() must be equalTo Close
     }
   }
 

@@ -1,4 +1,4 @@
-import services.Elevator
+import services.ShortestPathElevator
 import services.model.{GoDown, GoUp}
 
 /**
@@ -27,13 +27,13 @@ object Replayer {
     val resetPattern = "/reset\\?cause=(.*)".r
     val parsedLogs = parseLogs(logs)
 
-    Elevator.reset("Starting test")
+    ShortestPathElevator.reset("Starting test")
     for (call <- parsedLogs) call match {
-      case "/nextCommand" => Elevator.nextCommand()
-      case goPattern(floor) => Elevator.go(Integer.parseInt(floor))
-      case callPattern(floor, "UP") => Elevator.call(Integer.parseInt(floor), GoUp)
-      case callPattern(floor, "DOWN") => Elevator.call(Integer.parseInt(floor), GoDown)
-      case resetPattern(message) => Elevator.reset(message)
+      case "/nextCommand" => ShortestPathElevator.nextCommand()
+      case goPattern(floor) => ShortestPathElevator.go(Integer.parseInt(floor))
+      case callPattern(floor, "UP") => ShortestPathElevator.call(Integer.parseInt(floor), GoUp)
+      case callPattern(floor, "DOWN") => ShortestPathElevator.call(Integer.parseInt(floor), GoDown)
+      case resetPattern(message) => ShortestPathElevator.reset(message)
       case _ => ()
     }
   }

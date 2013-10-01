@@ -1,11 +1,11 @@
 package controllers
 
 import play.api.mvc._
-import services.ShortestPathElevator
+import services.{SimpleElevator, ShortestPathElevator}
 import services.model._
 import play.api.mvc.Action
 
-object Application extends Controller {
+object ApplicationV2 extends Controller {
 
 
   def index = Action {
@@ -18,17 +18,17 @@ object Application extends Controller {
       case "UP" => GoUp
       case "DOWN" => GoDown
     }
-    ShortestPathElevator.call(atFloor, d)
+    SimpleElevator.call(atFloor, d)
     Ok
   }
 
   def go(floorToGo: Int) = Action {
-    ShortestPathElevator.go(floorToGo)
+    SimpleElevator.go(floorToGo)
     Ok
   }
 
   def reset(cause: String) = Action {
-    ShortestPathElevator.reset(cause)
+    SimpleElevator.reset(cause)
     Ok
   }
   def userEntering() = Action {
@@ -40,7 +40,7 @@ object Application extends Controller {
   }
 
   def nextCommand = Action {
-    Ok(ShortestPathElevator.nextCommand() match {
+    Ok(SimpleElevator.nextCommand() match {
       case Open => "OPEN"
       case Close => "CLOSE"
       case Up => "UP"

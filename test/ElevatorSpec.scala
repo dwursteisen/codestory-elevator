@@ -1,6 +1,6 @@
 import org.specs2.mutable.Specification
-import services.Elevator
-import services.Elevator.Node
+import services.ShortestPathElevator
+import ShortestPathElevator.Node
 import services.model._
 
 /**
@@ -10,30 +10,30 @@ class ElevatorSpec extends Specification {
 
   "L'ascenceur" should {
     "passer par tous les étages" in {
-        val actions = Elevator.toActions(0, Closed, Seq(1, 2))
+        val actions = ShortestPathElevator.toActions(0, Closed, Seq(1, 2))
         actions must be equalTo Seq(Up, Open, Close, Up, Open)
     }
 
     "passer a l'étage suivant" in {
-        val actions = Elevator.toActions(0, Closed, Seq(1))
+        val actions = ShortestPathElevator.toActions(0, Closed, Seq(1))
         actions must be equalTo Seq(Up, Open)
     }
 
     "s'ouvrir" in {
-      val actions = Elevator.toActions(0, Closed, Seq(0))
+      val actions = ShortestPathElevator.toActions(0, Closed, Seq(0))
       actions must be equalTo Seq(Open)
     }
 
     "rester ouvert" in {
-        val actions = Elevator.toActions(0, Opened, Seq(0))
+        val actions = ShortestPathElevator.toActions(0, Opened, Seq(0))
         actions must be equalTo Seq(Nothing)
     }
 
     "gérer un scénario simple" in {
-      Elevator.reset("")
-      Elevator.call(1, GoUp)
-      Elevator.nextCommand() must be equalTo Up
-      Elevator.nextCommand() must be equalTo Open
+      ShortestPathElevator.reset("")
+      ShortestPathElevator.call(1, GoUp)
+      ShortestPathElevator.nextCommand() must be equalTo Up
+      ShortestPathElevator.nextCommand() must be equalTo Open
 
     }
 
@@ -50,16 +50,16 @@ class ElevatorSpec extends Specification {
 
   "le chemin " should {
     "avoir un score" in {
-      Elevator.scoreThisPath(0, Seq(Node(0))) must be equalTo 10
-      Elevator.scoreThisPath(0, Seq(Node(0), Node(0))) must be equalTo 20
-      Elevator.scoreThisPath(0, Seq(Node(0), Node(1), Node(0))) must be equalTo 20
-      Elevator.scoreThisPath(0, Seq(Node(0), Node(0), Node(1))) must be equalTo 25
+      ShortestPathElevator.scoreThisPath(0, Seq(Node(0))) must be equalTo 10
+      ShortestPathElevator.scoreThisPath(0, Seq(Node(0), Node(0))) must be equalTo 20
+      ShortestPathElevator.scoreThisPath(0, Seq(Node(0), Node(1), Node(0))) must be equalTo 20
+      ShortestPathElevator.scoreThisPath(0, Seq(Node(0), Node(0), Node(1))) must be equalTo 25
     }
   }
 
   "le chemin " should {
     "être transformé en roadmap" in {
-      val roadMap: Seq[Int] = Elevator.pathToRoadMap(Seq(Node(0), Node(1), Node(1), Node(2)))
+      val roadMap: Seq[Int] = ShortestPathElevator.pathToRoadMap(Seq(Node(0), Node(1), Node(1), Node(2)))
       roadMap must be equalTo Seq(0, 1, 2)
     }
   }
