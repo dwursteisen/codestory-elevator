@@ -21,6 +21,7 @@ object SimpleElevator extends Elevator {
       }
       case Some(operation) => {
         val action = toAction(operation)
+        applyOperation(operation)
         currentDirection = nextDirection(currentDirection)
         action
       }
@@ -85,35 +86,39 @@ object SimpleElevator extends Elevator {
   }
 
   def toAction(operation: Operation): Action = currentStatus match {
+    case Closed if operation.isSameFloor(currentFloor) => Open
+    case Closed if operation.floor > currentFloor => Up
+    case Closed if operation.floor < currentFloor => Down
+    case Opened if operation.isSameFloor(currentFloor) && shouldClose == false => Nothing
+    case Opened if operation.isSameFloor(currentFloor) && shouldClose == true => Close
+    case Opened if !operation.isSameFloor(currentFloor) => Close
+
+  }
+
+  def applyOperation(operation: Operation) = currentStatus match {
     case Closed if operation.isSameFloor(currentFloor) => {
       path = path.filterNot(_.isSameFloor(currentFloor))
       currentStatus = Opened
       shouldClose = false
-      Open
     }
     case Closed if operation.floor > currentFloor => {
       currentFloor = currentFloor + 1
-      Up
     }
     case Closed if operation.floor < currentFloor => {
       currentFloor = currentFloor - 1
-      Down
     }
     case Opened if operation.isSameFloor(currentFloor) && shouldClose == false => {
       path = path.filterNot(_.isSameFloor(currentFloor))
       shouldClose = true
-      Nothing
     }
     case Opened if operation.isSameFloor(currentFloor) && shouldClose == true => {
       path = path.filterNot(_.isSameFloor(currentFloor))
       currentStatus = Closed
       shouldClose = false
-      Close
     }
     case Opened if !operation.isSameFloor(currentFloor) => {
       currentStatus = Closed
       shouldClose = false
-      Close
     }
 
   }
