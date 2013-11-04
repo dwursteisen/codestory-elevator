@@ -1,6 +1,7 @@
 package services
 
 import services.model._
+import play.api.Logger
 
 /**
  * Created by david on 26/09/13.
@@ -57,7 +58,7 @@ object ShortestPathElevator extends Elevator{
     }
     // shoudl
     val actionToReturn = actions.headOption.getOrElse(Nothing)
-    actionToReturn match {
+    val result = actionToReturn match {
       case Nothing if shouldClose => {
         shouldClose = false
         currentStatus = Closed
@@ -69,6 +70,9 @@ object ShortestPathElevator extends Elevator{
       }
       case action => action
     }
+
+    Logger.info({"NEXT COMMAND %s".format(result)})
+    result
 
   }
 
@@ -102,11 +106,13 @@ object ShortestPathElevator extends Elevator{
   def call(floor: Int, direction: Direction) = {
     slowPath = slowPath :+ Call(floor, direction)
     shouldClose = false
+    Logger.info({"CALL %d %s".format(floor, direction)})
   }
 
   def go(floor: Int) = {
     slowPath = slowPath :+ Go(floor)
     shouldClose = false
+    Logger.info({"GO %d".format(floor)})
   }
 
   def reset(cause: String) = {
@@ -115,6 +121,7 @@ object ShortestPathElevator extends Elevator{
     slowPath = Seq[Operation]()
     currentStatus = Closed
     shouldClose = false
+    Logger.error({"RESET %s".format(cause)})
   }
 
 

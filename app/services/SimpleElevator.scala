@@ -1,6 +1,7 @@
 package services
 
 import services.model._
+import play.api.Logger
 
 /**
  * Created by david on 01/10/13.
@@ -15,7 +16,7 @@ object SimpleElevator extends Elevator {
 
   def nextCommand(): Action = {
     val closestOperation = findNextOperation(currentDirection)
-    closestOperation match {
+    val result = closestOperation match {
       case None => {
         Nothing
       }
@@ -25,8 +26,11 @@ object SimpleElevator extends Elevator {
         currentDirection = nextDirection(currentDirection)
         action
       }
+
     }
 
+    Logger.info({"NEXT COMMAND %s".format(result)})
+    result
   }
 
 
@@ -126,11 +130,13 @@ object SimpleElevator extends Elevator {
   def call(floor: Int, direction: Direction) {
     path = path :+ Call(floor, direction)
     shouldClose = false
+    Logger.info({"CALL %d %s".format(floor, direction)})
   }
 
   def go(floor: Int) {
     path = path :+ Go(floor)
     shouldClose = false
+    Logger.info({"GO %d".format(floor)})
   }
 
   def reset(cause: String) {
@@ -139,5 +145,7 @@ object SimpleElevator extends Elevator {
     currentStatus = Closed
     path = Seq()
     shouldClose = false
+
+    Logger.error({"RESET %s".format(cause)})
   }
 }
