@@ -50,10 +50,10 @@ object ShortestPathElevator extends Elevator{
         currentStatus = Closed
       }
       case Up :: tail  => {
-        currentFloor = Math.min(currentFloor + 1, 6)
+        currentFloor = Math.min(currentFloor + 1, MAX_FLOOR)
       }
       case Down :: tail  => {
-        currentFloor = Math.max(currentFloor -1, 0)
+        currentFloor = Math.max(currentFloor -1, MIN_FLOOR)
       }
     }
     // shoudl

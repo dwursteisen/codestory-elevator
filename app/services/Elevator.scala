@@ -7,6 +7,9 @@ import services.model._
  */
 trait Elevator {
 
+  val MAX_FLOOR = 19
+  val MIN_FLOOR = 0
+
   def nextCommand(): Action
 
   def call(floor: Int, direction: Direction)
