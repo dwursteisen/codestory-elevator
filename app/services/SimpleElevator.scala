@@ -148,5 +148,6 @@ object SimpleElevator extends Elevator {
     shouldClose = false
 
     Logger.error({"%s /reset %s".format(DateTime.now(), cause)})
+    Logger.info({"%s /status f: %s d: %s s: %s ".format(DateTime.now(), currentFloor, currentDirection, currentStatus)})
   }
 }
