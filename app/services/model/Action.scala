@@ -5,12 +5,22 @@ package services.model
  */
 sealed trait Action
 
-case object Nothing extends Action
+case object Nothing extends Action {
+  override def toString: String = "NOTHING"
+}
 
-case object Up extends Action
+case object Up extends Action {
+  override def toString: String = "UP"
+}
 
-case object Down extends Action
+case object Down extends Action {
+  override def toString: String = "DOWN"
+}
 
-case object Open extends Action
+case object Open extends Action {
+  override def toString: String = "OPEN"
+}
 
-case object Close extends Action
+case object Close extends Action {
+  override def toString: String = "CLOSE"
+}

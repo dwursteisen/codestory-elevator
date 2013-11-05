@@ -40,13 +40,7 @@ object ApplicationV3 extends Controller {
   }
 
   def nextCommand = Action {
-    Ok(SimpleElevator.nextCommand() match {
-      case Open => "OPEN"
-      case Close => "CLOSE"
-      case Up => "UP"
-      case Down => "DOWN"
-      case _ => "NOTHING"
-    })
+    Ok(SimpleElevator.nextCommand().toString)
   }
 
 }

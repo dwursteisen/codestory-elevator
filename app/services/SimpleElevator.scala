@@ -2,6 +2,7 @@ package services
 
 import services.model._
 import play.api.Logger
+import org.joda.time.DateTime
 
 /**
  * Created by david on 01/10/13.
@@ -29,7 +30,7 @@ object SimpleElevator extends Elevator {
 
     }
 
-    Logger.info({"NEXT COMMAND %s".format(result)})
+    Logger.info({"%s /nextCommand %s".format(DateTime.now(), result)})
     result
   }
 
@@ -130,13 +131,13 @@ object SimpleElevator extends Elevator {
   def call(floor: Int, direction: Direction) {
     path = path :+ Call(floor, direction)
     shouldClose = false
-    Logger.info({"CALL %d %s".format(floor, direction)})
+    Logger.info({"%s /call?atFloor=%d&to=%s".format(DateTime.now(), floor, direction)})
   }
 
   def go(floor: Int) {
     path = path :+ Go(floor)
     shouldClose = false
-    Logger.info({"GO %d".format(floor)})
+    Logger.info({"%s /go?floorToGo=%d".format(DateTime.now(), floor)})
   }
 
   def reset(cause: String) {
@@ -146,6 +147,6 @@ object SimpleElevator extends Elevator {
     path = Seq()
     shouldClose = false
 
-    Logger.error({"RESET %s".format(cause)})
+    Logger.error({"%s /reset %s".format(DateTime.now(), cause)})
   }
 }
