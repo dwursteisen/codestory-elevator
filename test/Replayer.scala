@@ -1,21 +1,17 @@
+import play.Logger
 import services.{Elevator, ShortestPathElevator}
 import services.model.{GoDown, GoUp}
 
 /**
  * Created by david on 28/09/13.
  */
-object Replayer {
+class Replayer(val elevator: Elevator = ShortestPathElevator) {
 
-  var elevator:Elevator = ShortestPathElevator
+  var line: Int = 0
 
   def parseLine(log: String): String = {
     val subLog = log.substring(log.lastIndexOf("/"))
-    if (!subLog.startsWith("/nextCommand")) {
-      subLog
-    } else {
-      "/nextCommand"
-    }
-
+    subLog
   }
 
 
@@ -28,17 +24,30 @@ object Replayer {
     val goPattern = "/go\\?floorToGo=(\\d)".r
     val callPattern = "/call\\?atFloor=(\\d)&to=(.*)".r
     val resetPattern = "/reset\\?cause=(.*)".r
+    val nextCommandPattern = "/nextCommand (.*)".r
+
     val parsedLogs = parseLogs(logs)
 
     elevator.reset("Starting test")
-    for (call <- parsedLogs) call match {
-      case "/nextCommand" => elevator.nextCommand()
-      case goPattern(floor) => elevator.go(Integer.parseInt(floor))
-      case callPattern(floor, "UP") => elevator.call(Integer.parseInt(floor), GoUp)
-      case callPattern(floor, "DOWN") => elevator.call(Integer.parseInt(floor), GoDown)
-      case resetPattern(message) => elevator.reset(message)
-      case _ => ()
+    for (call <- parsedLogs) {
+      line = line + 1
+      Logger.error({"Command %s".format(call)})
+      call match {
+        case nextCommandPattern(expectedCommand) => {
+          val cmd = elevator.nextCommand()
+          if (cmd.toString != expectedCommand) {
+            Logger.error({"---- Error bellow ----"})
+            throw new RuntimeException("At line %d -> Expected command : %s - actual %s : ".format(line, expectedCommand, cmd))
+          }
+        }
+        case goPattern(floor) => elevator.go(Integer.parseInt(floor))
+        case callPattern(floor, "UP") => elevator.call(Integer.parseInt(floor), GoUp)
+        case callPattern(floor, "DOWN") => elevator.call(Integer.parseInt(floor), GoDown)
+        case resetPattern(message) => elevator.reset(message)
+        case _ => ()
+      }
     }
+
   }
 
 }

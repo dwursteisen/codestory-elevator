@@ -9,44 +9,62 @@ import org.joda.time.DateTime
  */
 object SimpleElevator extends Elevator {
 
-  var currentDirection: Option[Direction] = None
-  var currentFloor: Int = 0
-  var currentStatus: Status = Closed
   var path: Seq[Operation] = Seq()
-  var shouldClose = false
+  
+  case class CurrentStatus(floor: Int = 0, status: Status = Closed, direction: Option[Direction] = None) {
+      def up(): CurrentStatus = {
+          this.copy(floor = floor + 1, direction = Some(GoUp))
+      }
 
+      def down(): CurrentStatus = {
+          this.copy(floor = floor - 1, direction = Some(GoDown))
+      }
+
+      def open(): CurrentStatus = {
+        this.copy(status = Opened)
+      }
+
+      def close():CurrentStatus = {
+        this.copy(status = Closed)
+      }
+  }
+  
+  var current: CurrentStatus = CurrentStatus()
+  
+  
   def nextCommand(): Action = {
-    val closestOperation = findNextOperation(currentDirection)
+    val closestOperation = findNextOperation(nextDirection(current.direction))
     val result = closestOperation match {
       case None => {
         Nothing
+        
       }
       case Some(operation) => {
         val action = toAction(operation)
-        applyOperation(operation)
-        currentDirection = nextDirection(currentDirection)
+        current = applyOperation(operation)
         action
       }
 
     }
 
     Logger.info({"%s /nextCommand %s".format(DateTime.now(), result)})
+    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
     result
   }
 
 
   def findNextOperation(direction: Option[Direction]): Option[Operation] = direction match {
-    case Some(GoUp) => operationsInThisDirection(GoUp).filter(_.floor >= currentFloor).sortBy(_.floor).headOption match {
+    case Some(GoUp) => operationsInThisDirection(GoUp).filter(_.floor >= current.floor).sortBy(_.floor).headOption match {
       case None => findNextOperation(None)
       case option => option
     }
-    case Some(GoDown) => operationsInThisDirection(GoDown).filter(_.floor <= currentFloor).sortBy(-_.floor).headOption match {
+    case Some(GoDown) => operationsInThisDirection(GoDown).filter(_.floor <= current.floor).sortBy(-_.floor).headOption match {
       case None => findNextOperation(None)
       case option => option
     }
     case None => {
-      val below = path.filter(_.floor <= currentFloor)
-      val above = path.filter(_.floor >= currentFloor)
+      val below = path.filter(_.floor <= current.floor)
+      val above = path.filter(_.floor >= current.floor)
       if (below.size > above.size) {
         below.sortBy(_.floor).headOption
       } else {
@@ -67,19 +85,19 @@ object SimpleElevator extends Elevator {
   }
 
   def nextDirection(direction: Option[Direction]): Option[Direction] = direction match {
-    case Some(GoUp) => if (operationsInThisDirection(GoUp).filter(_.floor >= currentFloor).size > 0) {
+    case Some(GoUp) => if (operationsInThisDirection(GoUp).filter(_.floor >= current.floor).size > 0) {
       Some(GoUp)
     } else {
       nextDirection(Some(GoDown))
     }
-    case Some(GoDown) => if (operationsInThisDirection(GoDown).filter(_.floor <= currentFloor).size > 0) {
+    case Some(GoDown) => if (operationsInThisDirection(GoDown).filter(_.floor <= current.floor).size > 0) {
       Some(GoDown)
     } else {
       nextDirection(None)
     }
     case None => {
-      val below = path.filter(_.floor <= currentFloor)
-      val above = path.filter(_.floor >= currentFloor)
+      val below = path.filter(_.floor <= current.floor)
+      val above = path.filter(_.floor >= current.floor)
       if (below.size > above.size) {
         Some(GoDown)
       } else {
@@ -90,64 +108,53 @@ object SimpleElevator extends Elevator {
 
   }
 
-  def toAction(operation: Operation): Action = currentStatus match {
-    case Closed if operation.isSameFloor(currentFloor) => Open
-    case Closed if operation.floor > currentFloor => Up
-    case Closed if operation.floor < currentFloor => Down
-    case Opened if operation.isSameFloor(currentFloor) && shouldClose == false => Nothing
-    case Opened if operation.isSameFloor(currentFloor) && shouldClose == true => Close
-    case Opened if !operation.isSameFloor(currentFloor) => Close
+  def toAction(operation: Operation): Action = current.status match {
+    case Closed if operation.isSameFloor(current.floor) => Open
+    case Closed if operation.floor > current.floor => Up
+    case Closed if operation.floor < current.floor => Down
+    case Opened if operation.isSameFloor(current.floor) => Close
+    case Opened if !operation.isSameFloor(current.floor) => Close
 
   }
 
-  def applyOperation(operation: Operation) = currentStatus match {
-    case Closed if operation.isSameFloor(currentFloor) => {
-      path = path.filterNot(_.isSameFloor(currentFloor))
-      currentStatus = Opened
-      shouldClose = false
+  def applyOperation(operation: Operation):CurrentStatus = current.status match {
+    case Closed if operation.isSameFloor(current.floor) => {
+      path = path.filterNot(_.isSameFloor(current.floor))
+      current.open()
     }
-    case Closed if operation.floor > currentFloor => {
-      currentFloor = currentFloor + 1
+    case Closed if operation.floor > current.floor => {
+      current.up()
     }
-    case Closed if operation.floor < currentFloor => {
-      currentFloor = currentFloor - 1
+    case Closed if operation.floor < current.floor => {
+      current.down()
     }
-    case Opened if operation.isSameFloor(currentFloor) && shouldClose == false => {
-      path = path.filterNot(_.isSameFloor(currentFloor))
-      shouldClose = true
+    case Opened if operation.isSameFloor(current.floor) => {
+      path = path.filterNot(_.isSameFloor(current.floor))
+      current.close()
     }
-    case Opened if operation.isSameFloor(currentFloor) && shouldClose == true => {
-      path = path.filterNot(_.isSameFloor(currentFloor))
-      currentStatus = Closed
-      shouldClose = false
-    }
-    case Opened if !operation.isSameFloor(currentFloor) => {
-      currentStatus = Closed
-      shouldClose = false
+    case Opened if !operation.isSameFloor(current.floor) => {
+      current.close()
     }
 
   }
 
   def call(floor: Int, direction: Direction) {
     path = path :+ Call(floor, direction)
-    shouldClose = false
     Logger.info({"%s /call?atFloor=%d&to=%s".format(DateTime.now(), floor, direction)})
+    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
+
   }
 
   def go(floor: Int) {
     path = path :+ Go(floor)
-    shouldClose = false
     Logger.info({"%s /go?floorToGo=%d".format(DateTime.now(), floor)})
+    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
 
   def reset(cause: String) {
-    currentDirection = None
-    currentFloor = 0
-    currentStatus = Closed
     path = Seq()
-    shouldClose = false
-
+    current = new CurrentStatus()
     Logger.error({"%s /reset %s".format(DateTime.now(), cause)})
-    Logger.info({"%s /status f: %s d: %s s: %s ".format(DateTime.now(), currentFloor, currentDirection, currentStatus)})
+    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
 }
