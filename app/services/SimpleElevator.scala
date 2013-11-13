@@ -151,7 +151,7 @@ object SimpleElevator extends Elevator {
     Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
 
-  def reset(cause: String) {
+  def reset(cause: String, minFloor: Int, maxFloor: Int, maxPassenger: Int) {
     path = Seq()
     current = new CurrentStatus()
     Logger.error({"%s /reset %s".format(DateTime.now(), cause)})

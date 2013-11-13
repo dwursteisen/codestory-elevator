@@ -115,7 +115,7 @@ object ShortestPathElevator extends Elevator{
     Logger.info({"GO %d".format(floor)})
   }
 
-  def reset(cause: String) = {
+  def reset(cause: String, minFloor: Int, maxFloor: Int, maxPassenger: Int) = {
     currentFloor = 0
     currentDirection = GoUp
     slowPath = Seq[Operation]()
