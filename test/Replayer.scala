@@ -28,7 +28,7 @@ class Replayer(val elevator: Elevator = ShortestPathElevator) {
 
     val parsedLogs = parseLogs(logs)
 
-    elevator.reset("Starting test")
+    elevator.reset("Starting test", 0, 19, 49)
     for (call <- parsedLogs) {
       line = line + 1
       Logger.error({"Command %s".format(call)})
@@ -43,7 +43,7 @@ class Replayer(val elevator: Elevator = ShortestPathElevator) {
         case goPattern(floor) => elevator.go(Integer.parseInt(floor))
         case callPattern(floor, "UP") => elevator.call(Integer.parseInt(floor), GoUp)
         case callPattern(floor, "DOWN") => elevator.call(Integer.parseInt(floor), GoDown)
-        case resetPattern(message) => elevator.reset(message)
+        case resetPattern(message) => elevator.reset(message, 0, 19, 49)
         case _ => ()
       }
     }

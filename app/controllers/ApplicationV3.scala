@@ -27,8 +27,8 @@ object ApplicationV3 extends Controller {
     Ok
   }
 
-  def reset(cause: String) = Action {
-    SimpleElevator.reset(cause)
+  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int) = Action {
+    SimpleElevator.reset(cause, lowerFloor,higherFloor, cabinSize)
     Ok
   }
   def userEntering() = Action {
