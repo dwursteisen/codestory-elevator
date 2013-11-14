@@ -8,28 +8,30 @@ GET     /                           controllers.Application.index
 GET     /nextCommand                controllers.Application.nextCommand
 GET     /call                       controllers.Application.call(atFloor: Int, to: String)
 GET     /go                         controllers.Application.go(floorToGo: Int)
-GET     /reset                      controllers.Application.reset(cause: String, maxFloor: Int, minFloor: Int, maxPassenger: Int)
+GET     /reset                      controllers.Application.reset(cause: String, higherFloor: Int, lowerFloor: Int, cabinSize: Int)
 GET     /userHasEntered             controllers.Application.userEntering
 GET     /userHasExited              controllers.Application.userExiting
 
 GET     /v1/nextCommand                controllers.Application.nextCommand
 GET     /v1/call                       controllers.Application.call(atFloor: Int, to: String)
 GET     /v1/go                         controllers.Application.go(floorToGo: Int)
-GET     /v1/reset                      controllers.Application.reset(cause: String, maxFloor: Int, minFloor: Int, maxPassenger: Int)
+GET     /v1/reset                      controllers.Application.reset(cause: String, higherFloor: Int, lowerFloor: Int, cabinSize: Int)
 GET     /v1/userHasEntered             controllers.Application.userEntering
 GET     /v1/userHasExited              controllers.Application.userExiting
 
 GET     /v2/nextCommand                controllers.ApplicationV2.nextCommand
 GET     /v2/call                       controllers.ApplicationV2.call(atFloor: Int, to: String)
 GET     /v2/go                         controllers.ApplicationV2.go(floorToGo: Int)
-GET     /v2/reset                      controllers.ApplicationV2.reset(cause: String, maxFloor: Int, minFloor: Int, maxPassenger: Int)
+GET     /v2/reset                      controllers.ApplicationV2.reset(cause: String, higherFloor: Int, lowerFloor: Int, cabinSize: Int)
 GET     /v2/userHasEntered             controllers.ApplicationV2.userEntering
 GET     /v2/userHasExited              controllers.ApplicationV2.userExiting
+
+# /v3/reset?lowerFloor=0&higherFloor=19&cabinSize=42&cause=can%27t+go+down+because+current+floor+is+the+lowest+floor HTTP/1.1" 200 0 "-"
 
 GET     /v3/nextCommand                controllers.ApplicationV3.nextCommand
 GET     /v3/call                       controllers.ApplicationV3.call(atFloor: Int, to: String)
 GET     /v3/go                         controllers.ApplicationV3.go(floorToGo: Int)
-GET     /v3/reset                      controllers.ApplicationV3.reset(cause: String, maxFloor: Int, minFloor: Int, maxPassenger: Int)
+GET     /v3/reset                      controllers.ApplicationV3.reset(cause: String, higherFloor: Int, lowerFloor: Int, cabinSize: Int)
 GET     /v3/userHasEntered             controllers.ApplicationV3.userEntering
 GET     /v3/userHasExited              controllers.ApplicationV3.userExiting
 

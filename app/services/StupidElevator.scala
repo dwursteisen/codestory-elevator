@@ -34,7 +34,7 @@ object StupidElevator extends Elevator {
 
   def go(floor: Int) {}
 
-  def reset(cause: String, minFloor: Int, maxFloor: Int, maxPassenger: Int) {
+  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int) {
     // I don't give a fuck
   }
 }

@@ -28,9 +28,12 @@ object SimpleElevator extends Elevator {
         this.copy(status = Closed)
       }
   }
-  
+
+
+  case class CurrentConfig(maxFloor: Int = 19, minFloor: Int = 0, maxPassenger: Int = Integer.MAX_VALUE)
+
   var current: CurrentStatus = CurrentStatus()
-  
+  var config: CurrentConfig = CurrentConfig()
   
   def nextCommand(): Action = {
     val closestOperation = findNextOperation(nextDirection(current.direction))
@@ -151,9 +154,10 @@ object SimpleElevator extends Elevator {
     Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
 
-  def reset(cause: String, minFloor: Int, maxFloor: Int, maxPassenger: Int) {
+  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int) {
     path = Seq()
     current = new CurrentStatus()
+    config = new CurrentConfig(maxFloor = higherFloor, minFloor = lowerFloor, maxPassenger = cabinSize)
     Logger.error({"%s /reset %s".format(DateTime.now(), cause)})
     Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }

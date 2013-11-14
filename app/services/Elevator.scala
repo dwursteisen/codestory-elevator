@@ -16,5 +16,5 @@ trait Elevator {
 
   def go(floor: Int)
 
-  def reset(cause: String, minFloor: Int, maxFloor: Int, maxPassenger: Int)
+  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int)
 }
