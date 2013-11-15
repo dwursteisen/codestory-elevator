@@ -51,7 +51,7 @@ object SimpleElevator extends Elevator {
     }
 
     Logger.info({"%s /nextCommand %s".format(DateTime.now(), result)})
-    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
+    // Logger.info({"%s /status %s ".format(DateTime.now(), current)})
     result
   }
 
@@ -143,15 +143,15 @@ object SimpleElevator extends Elevator {
 
   def call(floor: Int, direction: Direction) {
     path = path :+ Call(floor, direction)
-    Logger.info({"%s /call?atFloor=%d&to=%s".format(DateTime.now(), floor, direction)})
-    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
+    // Logger.info({"%s /call?atFloor=%d&to=%s".format(DateTime.now(), floor, direction)})
+    // Logger.info({"%s /status %s ".format(DateTime.now(), current)})
 
   }
 
   def go(floor: Int) {
     path = path :+ Go(floor)
-    Logger.info({"%s /go?floorToGo=%d".format(DateTime.now(), floor)})
-    Logger.info({"%s /status %s ".format(DateTime.now(), current)})
+    // Logger.info({"%s /go?floorToGo=%d".format(DateTime.now(), floor)})
+    // Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
 
   def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int) {
