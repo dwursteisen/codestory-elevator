@@ -1,5 +1,5 @@
 import org.specs2.mutable.Specification
-import services.{SimpleElevator, ShortestPathElevator}
+import services.{SimpleElevator}
 import services.model.{Up, Open, Close}
 
 /**
@@ -8,27 +8,6 @@ import services.model.{Up, Open, Close}
 class ReplayerSpec extends Specification {
 
   "un scenario" should {
-    "être rejouer" in {
-      val scenario =
-        "2013-09-28 01:10:49.461     HTTPElevator http://localhost:9000/call?atFloor=0&to=UP\n" +
-          "2013-09-28 01:10:49.478     HTTPElevator http://localhost:9000/nextCommand OPEN\n" +
-          "2013-09-28 01:10:48.482     HTTPElevator http://localhost:9000/userHasEntered\n" +
-          "2013-09-28 01:10:48.485     HTTPElevator http://localhost:9000/go?floorToGo=5\n" +
-          "2013-09-28 01:10:49.461     HTTPElevator http://localhost:9000/call?atFloor=0&to=UP\n" +
-          "2013-09-28 01:10:49.478     HTTPElevator http://localhost:9000/nextCommand NOTHING\n" +
-          "2013-09-28 01:10:50.461     HTTPElevator http://localhost:9000/call?atFloor=2&to=DOWN\n"
-      new Replayer(ShortestPathElevator).replay(scenario)
-      ShortestPathElevator.nextCommand() must be equalTo Close
-      ShortestPathElevator.nextCommand() must be equalTo Up
-      ShortestPathElevator.nextCommand() must be equalTo Up
-      ShortestPathElevator.nextCommand() must be equalTo Open
-      ShortestPathElevator.nextCommand() must be equalTo Close
-      ShortestPathElevator.nextCommand() must be equalTo Up
-      ShortestPathElevator.nextCommand() must be equalTo Up
-      ShortestPathElevator.nextCommand() must be equalTo Up
-      ShortestPathElevator.nextCommand() must be equalTo Open
-    }
-
     "doit forcer la fermeture de l'acenceur" in {
       val scenario =
         "2013-09-28 18:04:38.224     HTTPElevator http://localhost:9000/call?atFloor=0&to=UP\n" +

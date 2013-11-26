@@ -1,5 +1,5 @@
 import play.Logger
-import services.{Elevator, ShortestPathElevator}
+import services.{Elevator}
 import services.model.{GoDown, GoUp}
 
 /**
