@@ -57,7 +57,7 @@ object SimpleElevator extends Elevator {
         val action = toAction(current, operation)
         val nextCurrent = applyOperation(current, operation)
         // replace the old with the new
-        currents = currents.filterNot(current eq _) :+ nextCurrent
+        currents = (currents.filterNot(current eq _) :+ nextCurrent).sortBy(_.cabin)
         action
       }
 
