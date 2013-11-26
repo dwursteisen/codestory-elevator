@@ -4,6 +4,7 @@ import play.api.mvc._
 import services.SimpleElevator
 import services.model._
 import play.api.mvc.Action
+import org.apache.commons.lang3.StringUtils
 
 object ApplicationV3 extends Controller {
 
@@ -40,7 +41,8 @@ object ApplicationV3 extends Controller {
   }
 
   def nextCommands = Action {
-    Ok(SimpleElevator.nextCommands().foldLeft("")((e1, e2) => e1 + e2.toString + "\n"))
+    val result: String = SimpleElevator.nextCommands().foldLeft("")((e1, e2) => e1 + e2.toString + "\n")
+    Ok(StringUtils.trim(result.substring(0, result.length - 1)))
   }
 
 }
