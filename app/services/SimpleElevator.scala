@@ -126,7 +126,10 @@ object SimpleElevator extends Elevator {
   }
 
   def toAction(current: CurrentStatus, operation: Operation): Action = current.status match {
-    case Closed if operation.isSameFloor(current.floor) => Open
+    case Closed if operation.isSameFloor(current.floor) => current.direction.map(_ match {
+      case GoUp => OpenUp
+      case GoDown => OpenDown
+    }).getOrElse(Open)
     case Closed if operation.floor > current.floor => Up
     case Closed if operation.floor < current.floor => Down
     case Opened if operation.isSameFloor(current.floor) => Close

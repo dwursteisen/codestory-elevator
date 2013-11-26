@@ -21,6 +21,16 @@ case object Open extends Action {
   override def toString: String = "OPEN"
 }
 
+case object OpenUp extends Action {
+  override def toString: String = "OPEN_UP"
+
+}
+
+case object OpenDown extends Action {
+  override def toString: String = "OPEN_DOWN"
+
+}
 case object Close extends Action {
   override def toString: String = "CLOSE"
 }
+
