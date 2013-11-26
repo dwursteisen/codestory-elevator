@@ -45,7 +45,9 @@ object SimpleElevator extends Elevator {
   def allCabins = (0.to (config.cabinCount - 1)) 
   
   def nextCommand(current: CurrentStatus): Action = {
-    val closestOperation = findNextOperation(current, nextDirection(current, current.direction))
+    val cabinPath = operationsForThisCabin(this.path, current)
+    val closestOperation = findNextOperation(cabinPath, current,
+                                  nextDirection(cabinPath, current, current.direction))
     val result = closestOperation match {
       case None => {
         Nothing
@@ -66,13 +68,13 @@ object SimpleElevator extends Elevator {
   }
 
 
-  def findNextOperation(current: CurrentStatus, direction: Option[Direction]): Option[Operation] = direction match {
-    case Some(GoUp) => operationsInThisDirection(current, GoUp).filter(_.floor >= current.floor).sortBy(_.floor).headOption match {
-      case None => findNextOperation(current, None)
+  def findNextOperation(path: Seq[Operation], current: CurrentStatus, direction: Option[Direction]): Option[Operation] = direction match {
+    case Some(GoUp) => operationsInThisDirection(path, current, GoUp).filter(_.floor >= current.floor).sortBy(_.floor).headOption match {
+      case None => findNextOperation(path, current, None)
       case option => option
     }
-    case Some(GoDown) => operationsInThisDirection(current, GoDown).filter(_.floor <= current.floor).sortBy(-_.floor).headOption match {
-      case None => findNextOperation(current, None)
+    case Some(GoDown) => operationsInThisDirection(path, current, GoDown).filter(_.floor <= current.floor).sortBy(-_.floor).headOption match {
+      case None => findNextOperation(path, current, None)
       case option => option
     }
     case None => {
@@ -86,7 +88,9 @@ object SimpleElevator extends Elevator {
     }
   }
 
-  def operationsInThisDirection(current: CurrentStatus, direction: Direction) = direction match {
+  def operationsForThisCabin(path: Seq[Operation], current: CurrentStatus) = path.filter(_.isSameCabin(current.cabin))
+
+  def operationsInThisDirection(path: Seq[Operation], current: CurrentStatus, direction: Direction) = direction match {
     case GoUp => path.filter(op => op match {
       case Call(_, cabin, GoDown) => false
       case _ => true
@@ -97,16 +101,16 @@ object SimpleElevator extends Elevator {
     })
   }
 
-  def nextDirection(current: CurrentStatus, direction: Option[Direction]): Option[Direction] = direction match {
-    case Some(GoUp) => if (operationsInThisDirection(current, GoUp).filter(_.floor >= current.floor).size > 0) {
+  def nextDirection(path: Seq[Operation], current: CurrentStatus, direction: Option[Direction]): Option[Direction] = direction match {
+    case Some(GoUp) => if (operationsInThisDirection(path, current, GoUp).filter(_.floor >= current.floor).size > 0) {
       Some(GoUp)
     } else {
-      nextDirection(current, Some(GoDown))
+      nextDirection(path, current, Some(GoDown))
     }
-    case Some(GoDown) => if (operationsInThisDirection(current, GoDown).filter(_.floor <= current.floor).size > 0) {
+    case Some(GoDown) => if (operationsInThisDirection(path, current, GoDown).filter(_.floor <= current.floor).size > 0) {
       Some(GoDown)
     } else {
-      nextDirection(current, None)
+      nextDirection(path, current, None)
     }
     case None => {
       val below = path.filter(_.floor <= current.floor)
