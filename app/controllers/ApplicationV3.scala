@@ -22,13 +22,13 @@ object ApplicationV3 extends Controller {
     Ok
   }
 
-  def go(floorToGo: Int) = Action {
-    SimpleElevator.go(floorToGo)
+  def go(floorToGo: Int, cabin: Int) = Action {
+    SimpleElevator.go(floorToGo, cabin)
     Ok
   }
 
-  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int) = Action {
-    SimpleElevator.reset(cause, lowerFloor,higherFloor, cabinSize)
+  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int) = Action {
+    SimpleElevator.reset(cause, lowerFloor,higherFloor, cabinSize, cabinCount)
     Ok
   }
   def userEntering() = Action {
@@ -39,8 +39,8 @@ object ApplicationV3 extends Controller {
     Ok
   }
 
-  def nextCommand = Action {
-    Ok(SimpleElevator.nextCommand().toString)
+  def nextCommands = Action {
+    Ok(SimpleElevator.nextCommands().foldLeft("")((e1, e2) => e1 + e2.toString + "\n"))
   }
 
 }

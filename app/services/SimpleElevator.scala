@@ -30,12 +30,18 @@ object SimpleElevator extends Elevator {
   }
 
 
-  case class CurrentConfig(maxFloor: Int = 19, minFloor: Int = 0, maxPassenger: Int = Integer.MAX_VALUE)
+  case class CurrentConfig(maxFloor: Int = 19, minFloor: Int = 0, maxPassenger: Int = 40, cabinCount: Int = 2)
 
   var current: CurrentStatus = CurrentStatus()
   var config: CurrentConfig = CurrentConfig()
-  
-  def nextCommand(): Action = {
+
+  def nextCommands(): Seq[Action] = {
+    for {
+      cabin <- (0.to (config.cabinCount - 1))
+    } yield nextCommand(cabin)
+  }
+
+  def nextCommand(cabin: Int): Action = {
     val closestOperation = findNextOperation(nextDirection(current.direction))
     val result = closestOperation match {
       case None => {
@@ -148,16 +154,16 @@ object SimpleElevator extends Elevator {
 
   }
 
-  def go(floor: Int) {
+  def go(floor: Int, cabin: Int) {
     path = path :+ Go(floor)
     // Logger.info({"%s /go?floorToGo=%d".format(DateTime.now(), floor)})
     // Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
 
-  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int) {
+  def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int) {
     path = Seq()
     current = new CurrentStatus()
-    config = new CurrentConfig(maxFloor = higherFloor, minFloor = lowerFloor, maxPassenger = cabinSize)
+    config = new CurrentConfig(maxFloor = higherFloor, minFloor = lowerFloor, maxPassenger = cabinSize, cabinCount = cabinCount)
     Logger.error({"%s /reset %s".format(DateTime.now(), cause)})
     Logger.info({"%s /status %s ".format(DateTime.now(), current)})
   }
