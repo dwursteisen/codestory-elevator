@@ -1,6 +1,7 @@
 package services
 
 import services.model._
+import services.SimpleElevator.CurrentStatus
 
 /**
  * Created by david on 01/10/13.
@@ -10,7 +11,7 @@ trait Elevator {
   val MAX_FLOOR = 19
   val MIN_FLOOR = 0
 
-  def nextCommand(cabin: Int): Action
+  def nextCommand(current: CurrentStatus): Action
   def nextCommands(): Seq[Action]
 
   def call(floor: Int, direction: Direction)
