@@ -32,11 +32,13 @@ object ApplicationV3 extends Controller {
     SimpleElevator.reset(cause, lowerFloor,higherFloor, cabinSize, cabinCount)
     Ok
   }
-  def userEntering() = Action {
+  def userEntering(cabin: Int) = Action {
+    SimpleElevator.userHasEntered(cabin)
     Ok
   }
 
-  def userExiting() = Action {
+  def userExiting(cabin: Int) = Action {
+    SimpleElevator.userHasExited(cabin)
     Ok
   }
 

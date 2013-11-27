@@ -12,8 +12,8 @@ GET     /v3/nextCommands               controllers.ApplicationV3.nextCommands
 GET     /v3/call                       controllers.ApplicationV3.call(atFloor: Int, to: String)
 GET     /v3/go                         controllers.ApplicationV3.go(floorToGo: Int, cabin: Int)
 GET     /v3/reset                      controllers.ApplicationV3.reset(cause: String, higherFloor: Int, lowerFloor: Int, cabinSize: Int, cabinCount: Int)
-GET     /v3/userHasEntered             controllers.ApplicationV3.userEntering
-GET     /v3/userHasExited              controllers.ApplicationV3.userExiting
+GET     /v3/userHasEntered             controllers.ApplicationV3.userEntering(cabin: Int)
+GET     /v3/userHasExited              controllers.ApplicationV3.userExiting(cabin: Int)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

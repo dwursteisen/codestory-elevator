@@ -19,4 +19,7 @@ trait Elevator {
   def go(floor: Int, cabin: Int)
 
   def reset(cause: String, lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int)
+
+  def userHasEntered(cabin: Int)
+  def userHasExited(cabin: Int)
 }

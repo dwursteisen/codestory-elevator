@@ -10,29 +10,29 @@ import org.joda.time.DateTime
 object SimpleElevator extends Elevator {
 
   var path: Seq[Operation] = Seq()
-  
-  case class CurrentStatus(cabin: Int, floor: Int = 0, status: Status = Closed, direction: Option[Direction] = None) {
-      def up(): CurrentStatus = {
-          this.copy(floor = floor + 1, direction = Some(GoUp))
-      }
 
-      def down(): CurrentStatus = {
-          this.copy(floor = floor - 1, direction = Some(GoDown))
-      }
+  case class CurrentStatus(cabin: Int, floor: Int = 0, passenger: Int = 0, status: Status = Closed, direction: Option[Direction] = None) {
+    def up(): CurrentStatus = {
+      this.copy(floor = floor + 1, direction = Some(GoUp))
+    }
 
-      def open(): CurrentStatus = {
-        this.copy(status = Opened)
-      }
+    def down(): CurrentStatus = {
+      this.copy(floor = floor - 1, direction = Some(GoDown))
+    }
 
-      def close():CurrentStatus = {
-        this.copy(status = Closed)
-      }
+    def open(): CurrentStatus = {
+      this.copy(status = Opened)
+    }
+
+    def close(): CurrentStatus = {
+      this.copy(status = Closed)
+    }
   }
 
 
   case class CurrentConfig(maxFloor: Int = 19, minFloor: Int = 0, maxPassenger: Int = 40, cabinCount: Int = 2)
 
-  
+
   var config: CurrentConfig = CurrentConfig()
   var currents: Seq[CurrentStatus] = allCabins.map(c => CurrentStatus(c))
 
@@ -42,31 +42,49 @@ object SimpleElevator extends Elevator {
     } yield nextCommand(cabin)
   }
 
-  def allCabins = (0.to (config.cabinCount - 1)) 
-  
+  def allCabins = (0.to(config.cabinCount - 1))
+
   def nextCommand(current: CurrentStatus): Action = {
     val cabinPath = operationsForThisCabin(this.path, current)
     val closestOperation = findNextOperation(cabinPath, current,
-                                  nextDirection(cabinPath, current, current.direction))
+      nextDirection(cabinPath, current, current.direction))
     val result = closestOperation match {
       case None => {
         Nothing
-        
+
       }
       case Some(operation) => {
         val action = toAction(current, operation)
         val nextCurrent = applyOperation(current, operation)
         // replace the old with the new
-        currents = (currents.filterNot(current eq _) :+ nextCurrent).sortBy(_.cabin)
+        currents = replace(current).withThis(nextCurrent).into(currents)
         action
       }
 
     }
 
-    Logger.info({"%s /nextCommand %s".format(DateTime.now(), result)})
+    Logger.info({
+      "%s /nextCommand %s".format(DateTime.now(), result)
+    })
     result
   }
 
+  def replace(old: CurrentStatus) = {
+    class With {
+      def withThis(next: CurrentStatus) = {
+
+        class Into {
+          def into(currents: Seq[CurrentStatus]): Seq[CurrentStatus] = {
+            (currents.filterNot(old eq _) :+ next).sortBy(_.cabin)
+          }
+        }
+        new Into()
+      }
+
+
+    }
+    new With()
+  }
 
   def findNextOperation(path: Seq[Operation], current: CurrentStatus, direction: Option[Direction]): Option[Operation] = direction match {
     case Some(GoUp) => operationsInThisDirection(path, current, GoUp).filter(_.floor >= current.floor).sortBy(_.floor).headOption match {
@@ -89,6 +107,10 @@ object SimpleElevator extends Elevator {
   }
 
   def operationsForThisCabin(path: Seq[Operation], current: CurrentStatus) = path.filter(_.isSameCabin(current.cabin))
+
+  def operationsThatCanFillThisCabin(path: Seq[Operation], current: CurrentStatus) = {
+
+  }
 
   def operationsInThisDirection(path: Seq[Operation], current: CurrentStatus, direction: Direction) = direction match {
     case GoUp => path.filter(op => op match {
@@ -137,7 +159,7 @@ object SimpleElevator extends Elevator {
 
   }
 
-  def applyOperation(current: CurrentStatus, operation: Operation):CurrentStatus = current.status match {
+  def applyOperation(current: CurrentStatus, operation: Operation): CurrentStatus = current.status match {
     case Closed if operation.isSameFloor(current.floor) => {
       path = path.filterNot(_.isSameFloor(current.floor))
       current.open()
@@ -171,7 +193,31 @@ object SimpleElevator extends Elevator {
     path = Seq()
     config = new CurrentConfig(maxFloor = higherFloor, minFloor = lowerFloor, maxPassenger = cabinSize, cabinCount = cabinCount)
     currents = allCabins.map(c => CurrentStatus(c))
-    Logger.error({"%s /reset %s".format(DateTime.now(), cause)})
-    Logger.info({"%s /status %s ".format(DateTime.now(), currents)})
+    Logger.error({
+      "%s /reset %s".format(DateTime.now(), cause)
+    })
+    Logger.info({
+      "%s /status %s ".format(DateTime.now(), currents)
+    })
+  }
+
+  def userHasEntered(cabin: Int): Unit = {
+    val cabin: Option[CurrentStatus] = currents.find(_.cabin == cabin)
+    cabin match {
+      case None => ()
+      case Some(current) => {
+          currents = replace(current).withThis(current.copy(passenger = Math.min(config.maxPassenger, current.passenger + 1))).into(currents)
+      }
+    }
+  }
+
+  def userHasExited(cabin: Int): Unit ={
+    val cabin: Option[CurrentStatus] = currents.find(_.cabin == cabin)
+    cabin match {
+      case None => ()
+      case Some(current) => {
+          currents = replace(current).withThis(current.copy(passenger = Math.max(0, current.passenger - 1))).into(currents)
+      }
+    }
   }
 }
