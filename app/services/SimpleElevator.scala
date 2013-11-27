@@ -3,6 +3,7 @@ package services
 import services.model._
 import play.api.Logger
 import org.joda.time.DateTime
+import scala.collection.immutable.Iterable
 
 /**
  * Created by david on 01/10/13.
@@ -46,8 +47,9 @@ object SimpleElevator extends Elevator {
 
   def nextCommand(current: CurrentStatus): Action = {
     val cabinPath = operationsForThisCabin(this.path, current)
-    val closestOperation = findNextOperation(cabinPath, current,
-      nextDirection(cabinPath, current, current.direction))
+    val canFillPath = operationsThatCanFillThisCabin(cabinPath, current)
+    val closestOperation = findNextOperation(canFillPath, current,
+      nextDirection(canFillPath, current, current.direction))
     val result = closestOperation match {
       case None => {
         Nothing
@@ -108,8 +110,22 @@ object SimpleElevator extends Elevator {
 
   def operationsForThisCabin(path: Seq[Operation], current: CurrentStatus) = path.filter(_.isSameCabin(current.cabin))
 
-  def operationsThatCanFillThisCabin(path: Seq[Operation], current: CurrentStatus) = {
+  def operationsThatCanFillThisCabin(path: Seq[Operation], current: CurrentStatus): Seq[Operation] = {
+    if(current.passenger >= config.maxPassenger) {
+      path.filterNot(_.isInstanceOf[Call])
+    } else {
+      path
+    }
 
+    /*
+    val groupBy: Map[Int, Seq[Operation]] = path.filter(_ match {
+      case _: Call => true
+      case _ => false
+    }).groupBy(_.floor)
+    val filtered = groupBy.map { e => (e._1 -> e._2.size) }
+           .filter { e => e._2 + current.passenger <= config.maxPassenger }
+    filtered.map { e => groupBy.get(e._1) }.flatten.flatMap(e => e).toSeq
+    */
   }
 
   def operationsInThisDirection(path: Seq[Operation], current: CurrentStatus, direction: Direction) = direction match {
@@ -202,8 +218,8 @@ object SimpleElevator extends Elevator {
   }
 
   def userHasEntered(cabin: Int): Unit = {
-    val cabin: Option[CurrentStatus] = currents.find(_.cabin == cabin)
-    cabin match {
+    val cabinFound: Option[CurrentStatus] = currents.find { _.cabin equals cabin }
+    cabinFound match {
       case None => ()
       case Some(current) => {
           currents = replace(current).withThis(current.copy(passenger = Math.min(config.maxPassenger, current.passenger + 1))).into(currents)
@@ -212,8 +228,8 @@ object SimpleElevator extends Elevator {
   }
 
   def userHasExited(cabin: Int): Unit ={
-    val cabin: Option[CurrentStatus] = currents.find(_.cabin == cabin)
-    cabin match {
+    val cabinFound: Option[CurrentStatus] = currents.find(_.cabin equals cabin)
+    cabinFound match {
       case None => ()
       case Some(current) => {
           currents = replace(current).withThis(current.copy(passenger = Math.max(0, current.passenger - 1))).into(currents)
